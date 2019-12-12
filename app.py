@@ -80,7 +80,7 @@ class ContentModelView(ModelView):
             return True
 
 
-admin = admin.Admin(app, name='Admin', index_view=MyAdminIndexView(name=' '), template_mode='bootstrap3', url='/admin')
+admin = admin.Admin(app, name='Home', index_view=MyAdminIndexView(name=' '), template_mode='bootstrap3', url='/admin')
 admin.add_view(ContentModelView(Content, db.session, url='/content', ))
 api.add_resource(SendContent, '/api/content/')
 admin.add_link(MenuLink(name='Logout', category='', url="/logout"))
