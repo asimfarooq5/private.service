@@ -1,8 +1,10 @@
-from flask import Flask
+from flask import Flask, render_template, request, flash, session, redirect
+from flask_admin.menu import MenuLink
 from flask_restful import Resource, reqparse, Api
 from flask_sqlalchemy import SQLAlchemy
 
-from flask_admin import Admin
+import flask_admin as admin
+from flask_admin import expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 
 app = Flask(__name__)
@@ -42,16 +44,46 @@ class SendContent(Resource):
         return "OK", 200
 
 
+@app.route('/login', methods=['POST'])
+def login():
+    if request.form['username'] == 'admin' and request.form['password'] == 'private':
+        session['logged_in'] = True
+        return redirect('/content')
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session['logged_in'] = False
+    return render_template('login.html')
+
+
+class MyAdminIndexView(AdminIndexView):
+    @expose('/')
+    def index(self):
+        if session.get('logged_in'):
+            return redirect('/content')
+        if not session.get('logged_in'):
+            return render_template('login.html')
+        return super().index()
+
+
 class ContentModelView(ModelView):
     can_edit = False
-    can_create = True
+    can_create = False
     column_list = ('content',)
 
+    def is_accessible(self):
+        if session.get('logged_out'):
+            return False
+        if session.get('logged_in'):
+            return True
 
-admin = Admin(app, name='Sms', template_mode='bootstrap3')
+
+admin = admin.Admin(app, name='Admin', index_view=MyAdminIndexView(name=' '), template_mode='bootstrap3', url='/admin')
 admin.add_view(ContentModelView(Content, db.session, url='/content', ))
-
 api.add_resource(SendContent, '/api/content/')
+admin.add_link(MenuLink(name='Logout', category='', url="/logout"))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
