@@ -74,7 +74,7 @@ class MyAdminIndexView(AdminIndexView):
 class ContentModelView(ModelView):
     can_edit = False
     can_create = False
-    column_list = ('content',)
+    column_list = ('content', 'number',)
 
     def is_accessible(self):
         if session.get('logged_out'):
