@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, session, redirect
+from flask import Flask, render_template, request, session, redirect, make_response
 from flask_admin.menu import MenuLink
 from flask_restful import Resource, reqparse, Api
 from flask_sqlalchemy import SQLAlchemy
@@ -20,9 +20,9 @@ api = Api(app)
 
 class Content(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    number = db.Column(db.String(100), nullable=True)
-    content = db.Column(db.String(10000), nullable=True)
-    date = db.Column(db.String(100), nullable=True)
+    number = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.String(10000), nullable=False)
+    date = db.Column(db.String(100), nullable=False)
 
 
 class SendContent(Resource):
@@ -30,7 +30,7 @@ class SendContent(Resource):
         parser = reqparse.RequestParser(bundle_errors=True)
         parser.add_argument('number', type=str, help='Number', required=False)
         parser.add_argument('content', type=str, help='Content', required=True)
-        parser.add_argument('datetime', type=str, help='Date & Time', required=True)
+        parser.add_argument('datetime', type=str, help='Date & Time', required=False)
         args = parser.parse_args(strict=True)
         custom_args = {}
         for k, v in args.items():
@@ -48,6 +48,8 @@ class SendContent(Resource):
 def login():
     if request.form['username'] == 'admin' and request.form['password'] == 'private':
         session['logged_in'] = True
+        resp = make_response(redirect('/content'))
+        resp.set_cookie('username', request.form['username'])
         return redirect('/content')
     return render_template('login.html')
 
@@ -62,7 +64,8 @@ class MyAdminIndexView(AdminIndexView):
     @expose('/')
     def index(self):
         if session.get('logged_in'):
-            return redirect('/content')
+            if request.cookies.get('username'):
+                return redirect('/content')
         if not session.get('logged_in'):
             return render_template('login.html')
         return super().index()
