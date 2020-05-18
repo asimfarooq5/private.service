@@ -20,17 +20,21 @@ api = Api(app)
 
 class Content(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    number = db.Column(db.String(100), nullable=False)
-    content = db.Column(db.String(10000), nullable=False)
-    date = db.Column(db.String(100), nullable=False)
+    sr_number = db.Column(db.String(100), nullable=False)
+    body = db.Column(db.String(10000), nullable=False)
+    datetime = db.Column(db.String(100), nullable=False)
+    sender_number = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(100), nullable=True, default=0)
 
 
 class SendContent(Resource):
     def post(self):
         parser = reqparse.RequestParser(bundle_errors=True)
-        parser.add_argument('number', type=str, help='Number', required=False)
-        parser.add_argument('content', type=str, help='Content', required=True)
-        parser.add_argument('datetime', type=str, help='Date & Time', required=False)
+        parser.add_argument('sr_number', type=str, help='Serial Number', required=True)
+        parser.add_argument('body', type=str, help='Sms Body', required=True)
+        parser.add_argument('datetime', type=str, help='Date & Time', required=True)
+        parser.add_argument('sender_number', type=str, help='Sender Number', required=True)
+        parser.add_argument('status', type=str, help='SMS status ', required=False)
         args = parser.parse_args(strict=True)
         custom_args = {}
         for k, v in args.items():
@@ -46,7 +50,7 @@ class SendContent(Resource):
 
 @app.route('/login', methods=['POST'])
 def login():
-    if request.form['username'] == 'admin' and request.form['password'] == 'private':
+    if request.form['username'] == 'test' and request.form['password'] == 'test':
         session['logged_in'] = True
         resp = make_response(redirect('/content'))
         resp.set_cookie('username', request.form['username'])
@@ -68,13 +72,14 @@ class MyAdminIndexView(AdminIndexView):
                 return redirect('/content')
         if not session.get('logged_in'):
             return render_template('login.html')
-        return super().index()
+        return redirect('/content')
 
 
 class ContentModelView(ModelView):
     can_edit = False
     can_create = False
-    column_list = ('content', 'number',)
+
+    # column_list = ('content', 'number',)
 
     def is_accessible(self):
         if session.get('logged_out'):
