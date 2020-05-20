@@ -78,7 +78,7 @@ class MyAdminIndexView(AdminIndexView):
 class ContentModelView(ModelView):
     can_edit = False
     can_create = False
-
+    column_default_sort = ('datetime', True)
     # column_list = ('content', 'number',)
 
     def is_accessible(self):
