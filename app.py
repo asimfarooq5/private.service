@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, session, redirect, make_response
 from flask_admin.menu import MenuLink
 from flask_restful import Resource, reqparse, Api
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 import flask_admin as admin
@@ -15,26 +16,34 @@ app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
 db = SQLAlchemy(app)
 db.init_app(app)
+migrate = Migrate(app, db)
 api = Api(app)
+migrate.init_app(app, db, render_as_batch=True)
 
 
 class Content(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    sr_number = db.Column(db.String(100), nullable=False)
+    device_id = db.Column(db.String(100), nullable=False)
+    nick_name = db.Column(db.String(100), nullable=False, default='nick name')
     body = db.Column(db.String(10000), nullable=False)
     datetime = db.Column(db.String(100), nullable=False)
     sender_number = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(100), nullable=True, default=0)
+    online_datetime = db.Column(db.String(100), nullable=True)
+    online_status = db.Column(db.String(100), nullable=True)
 
 
 class SendContent(Resource):
     def post(self):
         parser = reqparse.RequestParser(bundle_errors=True)
-        parser.add_argument('sr_number', type=str, help='Serial Number', required=True)
+        parser.add_argument('device_id', type=str, help='Device ID', required=True)
+        parser.add_argument('nick_name', type=str, help='Nick Name', required=False)
         parser.add_argument('body', type=str, help='Sms Body', required=True)
         parser.add_argument('datetime', type=str, help='Date & Time', required=True)
         parser.add_argument('sender_number', type=str, help='Sender Number', required=True)
         parser.add_argument('status', type=str, help='SMS status ', required=False)
+        parser.add_argument('online_datetime', type=str, help=' Ping Date & Time', required=False)
+        parser.add_argument('online_status', type=str, help='SMS status ', required=False)
         args = parser.parse_args(strict=True)
         custom_args = {}
         for k, v in args.items():
@@ -46,6 +55,22 @@ class SendContent(Resource):
         db.session.commit()
 
         return "OK", 200
+
+    def put(self):
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument('device_id', type=str, help='Device ID', required=True)
+        parser.add_argument('online_datetime', type=str, help=' Ping Date & Time', required=True)
+        parser.add_argument('online_status', type=str, help='SMS status ', required=False)
+        args = parser.parse_args(strict=True)
+
+        content = Content.query.filter_by(device_id=args['device_id']).first()
+        if content:
+            print(content.device_id)
+            content.online_datetime = args['online_datetime']
+            content.online_status = args['online_status']
+            db.session.commit()
+            return "Updated", 200
+        return "Device not exist", 404
 
 
 @app.route('/')
@@ -81,11 +106,9 @@ class MyAdminIndexView(AdminIndexView):
 
 
 class ContentModelView(ModelView):
-    can_edit = False
+    can_edit = True
     can_create = False
     column_default_sort = ('datetime', True)
-
-    # column_list = ('content', 'number',)
 
     def is_accessible(self):
         if session.get('logged_out'):
