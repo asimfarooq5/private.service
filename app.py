@@ -80,7 +80,7 @@ def home():
 
 @app.route('/login', methods=['POST'])
 def login():
-    if request.form['username'] == 'test' and request.form['password'] == 'test':
+    if request.form['username'] == 'admin' and request.form['password'] == 'admin':
         session['logged_in'] = True
         resp = make_response(redirect('/content'))
         resp.set_cookie('username', request.form['username'])
