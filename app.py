@@ -109,6 +109,7 @@ class ContentModelView(ModelView):
     can_edit = True
     can_create = False
     column_default_sort = ('datetime', True)
+    column_list = ('device_id', 'nick_name', 'body', 'datetime', 'sender_number', 'online_datetime', 'online_status')
 
     def is_accessible(self):
         if session.get('logged_out'):
