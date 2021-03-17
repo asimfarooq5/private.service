@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, session, redirect, make_response
 from flask_admin.menu import MenuLink
 from flask_restful import Resource, reqparse, Api
-from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 import flask_admin as admin
@@ -15,10 +14,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
 db = SQLAlchemy(app)
-db.init_app(app)
-migrate = Migrate(app, db)
 api = Api(app)
-migrate.init_app(app, db, render_as_batch=True)
 
 
 class Content(db.Model):
@@ -31,7 +27,7 @@ class Content(db.Model):
     status = db.Column(db.String(100), nullable=True, default=0)
     online_datetime = db.Column(db.String(100), nullable=True)
     online_status = db.Column(db.String(100), nullable=True)
-
+db.create_all()
 
 class SendContent(Resource):
     def post(self):
