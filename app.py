@@ -7,6 +7,7 @@ import flask_admin as admin
 from flask_admin import expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 
+# Intialize  Flask_App, DB, Flask_Admin
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///main.db'
@@ -17,6 +18,7 @@ db = SQLAlchemy(app)
 api = Api(app)
 
 
+# Models for DB
 class Content(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.String(100), nullable=False)
@@ -27,8 +29,25 @@ class Content(db.Model):
     status = db.Column(db.String(100), nullable=True, default=0)
     online_datetime = db.Column(db.String(100), nullable=True)
     online_status = db.Column(db.String(100), nullable=True)
+
+
+class AppText(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    input1 = db.Column(db.String(10000), nullable=False)
+    input2 = db.Column(db.String(10000), nullable=False)
+    input3 = db.Column(db.String(10000), nullable=False)
+    input4 = db.Column(db.String(10000), nullable=False)
+    input5 = db.Column(db.String(10000), nullable=False)
+    input6 = db.Column(db.String(10000), nullable=False)
+    input7 = db.Column(db.String(10000), nullable=False)
+    input8 = db.Column(db.String(10000), nullable=False)
+
+
+# Create Tables on 1st run
 db.create_all()
 
+
+# API Resources
 class SendContent(Resource):
     def post(self):
         parser = reqparse.RequestParser(bundle_errors=True)
@@ -69,11 +88,62 @@ class SendContent(Resource):
         return "Device not exist", 404
 
 
+class AppTextRes(Resource):
+    def post(self):
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument('input1', type=str, help='input1', required=False)
+        parser.add_argument('input2', type=str, help='input2', required=False)
+        parser.add_argument('input3', type=str, help='input3', required=False)
+        parser.add_argument('input4', type=str, help='input4', required=False)
+        parser.add_argument('input5', type=str, help='input5', required=False)
+        parser.add_argument('input6', type=str, help='input6', required=False)
+        parser.add_argument('input7', type=str, help='input7', required=False)
+        parser.add_argument('input8', type=str, help='input8', required=False)
+        args = parser.parse_args(strict=True)
+        custom_args = {}
+        for k, v in args.items():
+            if v:
+                custom_args.update({k: v})
+
+        content = Content(**custom_args)
+        db.session.add(content)
+        db.session.commit()
+
+        return "OK", 200
+
+    def put(self):
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument('input1', type=str, help='input1', required=False)
+        parser.add_argument('input2', type=str, help='input2', required=False)
+        parser.add_argument('input3', type=str, help='input3', required=False)
+        parser.add_argument('input4', type=str, help='input4', required=False)
+        parser.add_argument('input5', type=str, help='input5', required=False)
+        parser.add_argument('input6', type=str, help='input6', required=False)
+        parser.add_argument('input7', type=str, help='input7', required=False)
+        parser.add_argument('input8', type=str, help='input8', required=False)
+        args = parser.parse_args(strict=True)
+        text = AppText.query.filter_by(id=1).first()
+        if text:
+            text.input1 = args['input1']
+            text.input2 = args['input2']
+            text.input3 = args['input3']
+            text.input4 = args['input4']
+            text.input5 = args['input5']
+            text.input6 = args['input6']
+            text.input7 = args['input7']
+            text.input8 = args['input8']
+            db.session.commit()
+
+        return "OK", 200
+
+
+# Redirecting Home to Admin
 @app.route('/')
 def home():
     return redirect('/admin')
 
 
+# Login/Logout
 @app.route('/login', methods=['POST'])
 def login():
     if request.form['username'] == 'admin' and request.form['password'] == 'admin':
@@ -101,6 +171,7 @@ class MyAdminIndexView(AdminIndexView):
         return redirect('/content')
 
 
+# Flask Admin Views
 class ContentModelView(ModelView):
     can_edit = True
     can_create = False
@@ -114,9 +185,19 @@ class ContentModelView(ModelView):
             return True
 
 
+class TextView(ModelView):
+    can_edit = True
+    can_create = False
+
+
+# Register Admin Routes/Views
 admin = admin.Admin(app, name='Home', index_view=MyAdminIndexView(name=' '), template_mode='bootstrap3', url='/admin')
 admin.add_view(ContentModelView(Content, db.session, url='/content', ))
+admin.add_view(TextView(AppText, db.session, url='/apptext', ))
+
+# API endpoint
 api.add_resource(SendContent, '/api/content/')
+api.add_resource(AppTextRes, '/api/apptext/')
 admin.add_link(MenuLink(name='Logout', category='', url="/logout"))
 
 if __name__ == '__main__':
