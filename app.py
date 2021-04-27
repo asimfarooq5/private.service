@@ -33,14 +33,14 @@ class Content(db.Model):
 
 class AppText(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    input1 = db.Column(db.String(10000), nullable=False)
-    input2 = db.Column(db.String(10000), nullable=False)
-    input3 = db.Column(db.String(10000), nullable=False)
-    input4 = db.Column(db.String(10000), nullable=False)
-    input5 = db.Column(db.String(10000), nullable=False)
-    input6 = db.Column(db.String(10000), nullable=False)
-    input7 = db.Column(db.String(10000), nullable=False)
-    input8 = db.Column(db.String(10000), nullable=False)
+    input1 = db.Column(db.String(10000))
+    input2 = db.Column(db.String(10000))
+    input3 = db.Column(db.String(10000))
+    input4 = db.Column(db.String(10000))
+    input5 = db.Column(db.String(10000))
+    input6 = db.Column(db.String(10000))
+    input7 = db.Column(db.String(10000))
+    input8 = db.Column(db.String(10000))
 
 
 # Create Tables on 1st run
@@ -105,7 +105,7 @@ class AppTextRes(Resource):
             if v:
                 custom_args.update({k: v})
 
-        content = Content(**custom_args)
+        content = AppText(**custom_args)
         db.session.add(content)
         db.session.commit()
 
