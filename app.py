@@ -22,17 +22,15 @@ api = Api(app)
 class Content(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.String(100), nullable=False)
-    nick_name = db.Column(db.String(100), nullable=False, default='nick name')
     body = db.Column(db.String(10000), nullable=False)
     datetime = db.Column(db.String(100), nullable=False)
     sender_number = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(100), nullable=True, default=0)
-    online_datetime = db.Column(db.String(100), nullable=True)
-    online_status = db.Column(db.String(100), nullable=True)
 
 
 class AppText(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    device_id = db.Column(db.String(100), nullable=False)
     input1 = db.Column(db.String(10000))
     input2 = db.Column(db.String(10000))
     input3 = db.Column(db.String(10000))
@@ -52,13 +50,10 @@ class SendContent(Resource):
     def post(self):
         parser = reqparse.RequestParser(bundle_errors=True)
         parser.add_argument('device_id', type=str, help='Device ID', required=True)
-        parser.add_argument('nick_name', type=str, help='Nick Name', required=False)
-        parser.add_argument('body', type=str, help='Sms Body', required=True)
-        parser.add_argument('datetime', type=str, help='Date & Time', required=True)
-        parser.add_argument('sender_number', type=str, help='Sender Number', required=True)
+        parser.add_argument('body', type=str, help='Sms Body', required=False)
+        parser.add_argument('datetime', type=str, help='Date & Time', required=False)
+        parser.add_argument('sender_number', type=str, help='Sender Number', required=False)
         parser.add_argument('status', type=str, help='SMS status ', required=False)
-        parser.add_argument('online_datetime', type=str, help=' Ping Date & Time', required=False)
-        parser.add_argument('online_status', type=str, help='SMS status ', required=False)
         args = parser.parse_args(strict=True)
         custom_args = {}
         for k, v in args.items():
@@ -71,26 +66,11 @@ class SendContent(Resource):
 
         return "OK", 200
 
-    def put(self):
-        parser = reqparse.RequestParser(bundle_errors=True)
-        parser.add_argument('device_id', type=str, help='Device ID', required=True)
-        parser.add_argument('online_datetime', type=str, help=' Ping Date & Time', required=True)
-        parser.add_argument('online_status', type=str, help='SMS status ', required=False)
-        args = parser.parse_args(strict=True)
-
-        content = Content.query.filter_by(device_id=args['device_id']).first()
-        if content:
-            print(content.device_id)
-            content.online_datetime = args['online_datetime']
-            content.online_status = args['online_status']
-            db.session.commit()
-            return "Updated", 200
-        return "Device not exist", 404
-
 
 class AppTextRes(Resource):
     def post(self):
         parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument('device_id', type=str, help='Device ID', required=True)
         parser.add_argument('input1', type=str, help='input1', required=False)
         parser.add_argument('input2', type=str, help='input2', required=False)
         parser.add_argument('input3', type=str, help='input3', required=False)
@@ -113,6 +93,7 @@ class AppTextRes(Resource):
 
     def put(self):
         parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument('device_id', type=str, help='Device ID', required=True)
         parser.add_argument('input1', type=str, help='input1', required=False)
         parser.add_argument('input2', type=str, help='input2', required=False)
         parser.add_argument('input3', type=str, help='input3', required=False)
@@ -122,7 +103,7 @@ class AppTextRes(Resource):
         parser.add_argument('input7', type=str, help='input7', required=False)
         parser.add_argument('input8', type=str, help='input8', required=False)
         args = parser.parse_args(strict=True)
-        text = AppText.query.filter_by(id=1).first()
+        text = AppText.query.filter_by(device_id=args['device_id']).first()
         if text:
             text.input1 = args['input1']
             text.input2 = args['input2']
@@ -176,7 +157,7 @@ class ContentModelView(ModelView):
     can_edit = True
     can_create = False
     column_default_sort = ('datetime', True)
-    column_list = ('device_id', 'nick_name', 'body', 'datetime', 'sender_number', 'online_datetime', 'online_status')
+    column_list = ('device_id', 'body', 'datetime', 'sender_number')
 
     def is_accessible(self):
         if session.get('logged_out'):
@@ -201,4 +182,4 @@ api.add_resource(AppTextRes, '/api/apptext/')
 admin.add_link(MenuLink(name='Logout', category='', url="/logout"))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
